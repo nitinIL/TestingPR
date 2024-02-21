@@ -47,14 +47,29 @@ data:
 
               #remote_addr for nonlocalhost
               #split logic 1
-              split_clients "${msec}" $sc_host {
+              split_clients "${msec}" $variant1 {
                   50%   signup.nwc1.com;
                   *     signup.nwc2.com;
               }
               
               #split logic 2
-              split_clients "${msec}" $sc_host2 {
+              split_clients "${msec}" $variant2 {
+                  60%   signup.nwc1.com;
+                  *     signup.nwc2.com;
+              }
+
+              split_clients "${msec}" $variant3 {
+                  70%   signup.nwc1.com;
+                  *     signup.nwc2.com;
+              }
+
+              split_clients "${msec}" $variant4 {
                   80%   signup.nwc1.com;
+                  *     signup.nwc2.com;
+              }
+
+              split_clients "${msec}" $variant5 {
+                  90%   signup.nwc1.com;
                   *     signup.nwc2.com;
               }
 
@@ -63,12 +78,30 @@ data:
              # if want to match var1 can be 45 or 64 do "~^:(45|64):.*:.*:$"
 
              # conditional splitting
-              map ":$arg_p:$arg_utm_source:" $backend_host{
-                      default signup.nwc3.com;
-                      "~^:64:.*:$" $sc_host2;
-                      "~^:.*:(64|98):$" $sc_host2;
-                      "~^:.*:42:$" $sc_host;
+              
+             if( $arg_p ~ "^64$"){
+             set $variant $variant1;
+             }
+
+             if( $arg_p ~ "^yahoo$"){
+             set $variant $variant2;
+             }
+
+             if( $arg_utm_source ~ "^42$"){
+             set $variant $variant3;
+             }
+
+               if ($cookie_persistent_backend) {
+                          set $variant $cookie_persistent_backend;
                       }
+                      
+             if( $arg_utm_source ~ "^98$"){
+             set $variant $variant4;
+             }
+
+             if( $arg_p ~ "^98$"){
+             set $variant $variant5;
+             }
              
 
               map "$backend_host" $ingress{
@@ -123,17 +156,10 @@ data:
 
                   location / {
 
-                     # only go to persistent if splitting occurs else always serve flask 3
-                      set $split_host $backend_host;
-
-                      if ($cookie_persistent_backend) {
-                          set $backend_host $cookie_persistent_backend;
-                      }
+                     
+                      set $backend_host $variant;
                       
-                      # split_host = signup.nwc3.com means splitting doesn't occurs
-                      if ($split_host = signup.nwc3.com){
-                          set $backend_host $split_host;
-                      }
+                      
                     
                        # no need to set persistent to flask3
                       if ($backend_host != signup.nwc3.com){
