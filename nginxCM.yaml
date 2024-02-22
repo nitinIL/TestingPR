@@ -67,9 +67,6 @@ data:
              set $variant $variant3;
              }
 
-              #  if ($cookie_persistent_backend) {
-              #             set $variant $cookie_persistent_backend;
-              #         }
                       
              if( $arg_utm_source ~ "^98$"){
              set $variant $variant4;
