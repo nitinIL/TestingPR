@@ -1,31 +1,4 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/nginx.conf
-          subPath: nginx.conf
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config
----
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -46,40 +19,43 @@ data:
               
 
               #remote_addr for nonlocalhost
+
+              #<PARSE SPLIT-LOGIC>
               #split logic 1
               split_clients "${msec}" $variant1 {
                   50%   signup.nwc1.com;
-                  *     signup.nwc2.com;
+                  50%     signup.nwc2.com;
               }
               
               #split logic 2
               split_clients "${msec}" $variant2 {
                   60%   signup.nwc1.com;
-                  *     signup.nwc2.com;
+                  40%     signup.nwc2.com;
               }
 
               split_clients "${msec}" $variant3 {
                   70%   signup.nwc1.com;
-                  *     signup.nwc2.com;
+                  30%     signup.nwc2.com;
               }
 
               split_clients "${msec}" $variant4 {
                   80%   signup.nwc1.com;
-                  *     signup.nwc2.com;
+                  20%     signup.nwc2.com;
               }
 
               split_clients "${msec}" $variant5 {
                   90%   signup.nwc1.com;
-                  *     signup.nwc2.com;
+                  10%     signup.nwc2.com;
               }
-
+              #</PARSE>
              # use :var1:var2:var3: -> "~^:.*:.*:.*:$"
              # now add conditions for each var
              # if want to match var1 can be 45 or 64 do "~^:(45|64):.*:.*:$"
 
              # conditional splitting
-              
-             if( $arg_p ~ "^64$"){
+            
+            #<PARSE CONDS>
+             if( $arg_p ~ "(^64$|^65$"){
              set $variant $variant1;
              }
 
@@ -91,9 +67,9 @@ data:
              set $variant $variant3;
              }
 
-               if ($cookie_persistent_backend) {
-                          set $variant $cookie_persistent_backend;
-                      }
+              #  if ($cookie_persistent_backend) {
+              #             set $variant $cookie_persistent_backend;
+              #         }
                       
              if( $arg_utm_source ~ "^98$"){
              set $variant $variant4;
@@ -102,7 +78,7 @@ data:
              if( $arg_p ~ "^98$"){
              set $variant $variant5;
              }
-             
+            #</PARSE>
 
               map "$backend_host" $ingress{
                           default 10.133.0.163;
@@ -175,18 +151,4 @@ data:
                   access_log /var/log/nginx/access.log cus_format;
               }
               }
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
 
