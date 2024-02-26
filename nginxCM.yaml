@@ -21,13 +21,11 @@ data:
               #remote_addr for nonlocalhost
 
               #<PARSE SPLIT-LOGIC>
-              #split logic 1
               split_clients "${msec}" $variant1 {
                   50%   signup.nwc1.com;
                   50%     signup.nwc2.com;
               }
               
-              #split logic 2
               split_clients "${msec}" $variant2 {
                   60%   signup.nwc1.com;
                   40%     signup.nwc2.com;
