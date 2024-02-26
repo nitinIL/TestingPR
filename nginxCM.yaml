@@ -1,149 +1,47 @@
-
 apiVersion: v1
+data:
+  nginx.conf: "\n\nevents {\n  \n    }\n\n    http {\n    #upgrade required is coming\n\
+    \    proxy_http_version 1.1;\n\n    log_format cus_format 'P_ARG: \"$arg_p\" -\
+    \ P_UTM: \"$arg_utm_source\" - BACKENDHOST: \"$backend_host\" - SCHOST: \"$sc_host\"\
+    \ - SCHOST2: \"$sc_host2\"  - REMOTEURL: \"$uri\" - INGRESS: \"$ingress\"';\n\
+    \    \n\n    #remote_addr for nonlocalhost\n\n    #<PARSE SPLIT-LOGIC>\nsplit_clients\
+    \ \"${msec}\" $variant1 {\n    55%   signup.nwc1.com;\n    25%   signup.nwc2.com;\n\
+    \    20%   signup.nwc3.com;\n}\n\nsplit_clients \"${msec}\" $variant2 {\n    60%\
+    \   signup.nwc1.com;\n    40%   signup.nwc2.com;\n}\n\nsplit_clients \"${msec}\"\
+    \ $variant3 {\n    70%   signup.nwc1.com;\n    30%   signup.nwc2.com;\n}\n\nsplit_clients\
+    \ \"${msec}\" $variant4 {\n    80%   signup.nwc1.com;\n    20%   signup.nwc2.com;\n\
+    }\n\nsplit_clients \"${msec}\" $variant5 {\n    90%   signup.nwc1.com;\n    10%\
+    \   signup.nwc2.com;\n}\n\nsplit_clients \"${msec}\" $ {\n}\n\n\n#</PARSE>\n \
+    \  # use :var1:var2:var3: -> \"~^:.*:.*:.*:$\"\n   # now add conditions for each\
+    \ var\n   # if want to match var1 can be 45 or 64 do \"~^:(45|64):.*:.*:$\"\n\n\
+    \   # conditional splitting\n  \n  #<PARSE CONDS>\nif( $variant1 ~ \"(^64$)\"\
+    \ ) {\n    set $variant $arg_p;\n    set $present true;\n}\n\nif( $variant2 ~\
+    \ \"(^yahoo$)\" ) {\n    set $variant $arg_p;\n    set $present true;\n}\n\nif(\
+    \ $variant1 ~ \"(^42$)\" ) {\n    set $variant $arg_utm_source;\n    set $present\
+    \ true;\n}\n\nif( $variant4 ~ \"(^98$)\" ) {\n    set $variant $arg_utm_source;\n\
+    \    set $present true;\n}\n\nif( $variant5 ~ \"(^98$)\" ) {\n    set $variant\
+    \ $arg_p;\n    set $present true;\n}\n\n\n#</PARSE>\n\n    map \"$backend_host\"\
+    \ $ingress{\n                default 10.133.0.163;\n                signup.nwc1.com\
+    \ 10.133.0.180;\n                signup.nwc2.com 10.133.0.180;\n             \
+    \ }\n\n\n    server {\n        listen 80;\n        server_name localhost;\n\n\
+    \        location / {\n            return 200 \"LOCALHOST HOMEPAGE\";\n      \
+    \  }\n    }\n\n    server {\n\n        \n\n        listen 80;\n        server_name\
+    \ signup.nwc.com;\n\n        set $ingress1 10.133.0.180;\n        set $ingress2\
+    \ 10.133.0.163;\n        \n        if ( $uri = \"/static/nwc1\"){\n          set\
+    \ $ingress $ingress1;\n          set $backend_host signup.nwc1.com;\n        }\n\
+    \n        if ( $uri = \"/static/nwc2\"){\n          set $ingress $ingress1;\n\
+    \          set $backend_host signup.nwc2.com;\n        }\n\n        if ( $uri\
+    \ = \"/static/nwc3\"){\n          set $ingress $ingress2;\n          set $backend_host\
+    \ signup.nwc3.com;\n        }\n\n        location /static/nwc {\n            \
+    \    \n                rewrite /static/.* / break;\n                proxy_pass\
+    \ http://$ingress;\n                proxy_set_header Host $backend_host;\n   \
+    \     \n        }\n\n\n        location / {\n\n           \n            set $backend_host\
+    \ $variant;\n            \n            \n          \n             # no need to\
+    \ set persistent to flask3\n            if ($backend_host != signup.nwc3.com){\n\
+    \            add_header Set-Cookie \"persistent_backend=$backend_host\";\n   \
+    \         }\n\n            proxy_pass http://$ingress;\n            proxy_set_header\
+    \ Host $backend_host;\n            \n            \n        }\n\n        access_log\
+    \ /var/log/nginx/access.log cus_format;\n    }\n    }\n"
 kind: ConfigMap
 metadata:
   name: nginx-config
-data:
-  nginx.conf: |
-        
-        
-          events {
-            
-              }
-
-              http {
-              #upgrade required is coming
-              proxy_http_version 1.1;
-
-              log_format cus_format 'P_ARG: "$arg_p" - P_UTM: "$arg_utm_source" - BACKENDHOST: "$backend_host" - SCHOST: "$sc_host" - SCHOST2: "$sc_host2"  - REMOTEURL: "$uri" - INGRESS: "$ingress"';
-              
-
-              #remote_addr for nonlocalhost
-
-              #<PARSE SPLIT-LOGIC>
-              split_clients "${msec}" $variant1 {
-                  50%   signup.nwc1.com;
-                  50%     signup.nwc2.com;
-              }
-              
-              split_clients "${msec}" $variant2 {
-                  60%   signup.nwc1.com;
-                  40%     signup.nwc2.com;
-              }
-
-              split_clients "${msec}" $variant3 {
-                  70%   signup.nwc1.com;
-                  30%     signup.nwc2.com;
-              }
-
-              split_clients "${msec}" $variant4 {
-                  80%   signup.nwc1.com;
-                  20%     signup.nwc2.com;
-              }
-
-              split_clients "${msec}" $variant5 {
-                  90%   signup.nwc1.com;
-                  10%     signup.nwc2.com;
-              }
-              #</PARSE>
-             # use :var1:var2:var3: -> "~^:.*:.*:.*:$"
-             # now add conditions for each var
-             # if want to match var1 can be 45 or 64 do "~^:(45|64):.*:.*:$"
-
-             # conditional splitting
-            
-            #<PARSE CONDS>
-             if( $arg_p ~ "(^64$|^65$"){
-             set $variant $variant1;
-             }
-
-             if( $arg_p ~ "^yahoo$"){
-             set $variant $variant2;
-             }
-
-             if( $arg_utm_source ~ "^42$"){
-             set $variant $variant3;
-             }
-
-                      
-             if( $arg_utm_source ~ "^98$"){
-             set $variant $variant4;
-             }
-
-             if( $arg_p ~ "^98$"){
-             set $variant $variant5;
-             }
-            #</PARSE>
-
-              map "$backend_host" $ingress{
-                          default 10.133.0.163;
-                          signup.nwc1.com 10.133.0.180;
-                          signup.nwc2.com 10.133.0.180;
-                        }
-
-
-              server {
-                  listen 80;
-                  server_name localhost;
-
-                  location / {
-                      return 200 "LOCALHOST HOMEPAGE";
-                  }
-              }
-
-              server {
-
-                  
-
-                  listen 80;
-                  server_name signup.nwc.com;
-
-                  set $ingress1 10.133.0.180;
-                  set $ingress2 10.133.0.163;
-                  
-                  if ( $uri = "/static/nwc1"){
-                    set $ingress $ingress1;
-                    set $backend_host signup.nwc1.com;
-                  }
-
-                  if ( $uri = "/static/nwc2"){
-                    set $ingress $ingress1;
-                    set $backend_host signup.nwc2.com;
-                  }
-
-                  if ( $uri = "/static/nwc3"){
-                    set $ingress $ingress2;
-                    set $backend_host signup.nwc3.com;
-                  }
-
-                  location /static/nwc {
-                          
-                          rewrite /static/.* / break;
-                          proxy_pass http://$ingress;
-                          proxy_set_header Host $backend_host;
-                  
-                  }
-
-
-                  location / {
-
-                     
-                      set $backend_host $variant;
-                      
-                      
-                    
-                       # no need to set persistent to flask3
-                      if ($backend_host != signup.nwc3.com){
-                      add_header Set-Cookie "persistent_backend=$backend_host";
-                      }
-
-                      proxy_pass http://$ingress;
-                      proxy_set_header Host $backend_host;
-                      
-                      
-                  }
-
-                  access_log /var/log/nginx/access.log cus_format;
-              }
-              }
-
