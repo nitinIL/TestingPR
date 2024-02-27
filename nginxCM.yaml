@@ -20,29 +20,14 @@ data:
         #<PARSE SPLIT-LOGIC>
     split_clients "${msec}" $variant1 {
         50%   signup.nwc1.com;
-        45%   signup.nwc2.com;
-        5%   test.signup.com;
+        40%   signup.nwc2.com;
+        10%   test.signup.com;
     }
 
     split_clients "${msec}" $variant2 {
         60%   signup.nwc1.com;
-        35%   signup.nwc2.com;
-        5%   test.signup.com;
-    }
-
-    split_clients "${msec}" $variant3 {
-        70%   signup.nwc1.com;
         30%   signup.nwc2.com;
-    }
-
-    split_clients "${msec}" $variant4 {
-        80%   signup.nwc1.com;
-        20%   signup.nwc2.com;
-    }
-
-    split_clients "${msec}" $variant5 {
-        90%   signup.nwc1.com;
-        10%   signup.nwc2.com;
+        10%   test.signup.com;
     }
 
 
@@ -54,28 +39,18 @@ data:
        # conditional splitting
       
       #<PARSE CONDS>
-    if( $arg_p ~ "(^64$|^65$)" ) {
+    if( $arg_p ~ "(^64$|^google$)" ) {
         set $variant $variant1;
         set $present true;
     }
 
-    if( $arg_p ~ "(^yahoo$)" ) {
+    if( $arg_p ~ "(^yahoo$|^98$)" ) {
         set $variant $variant2;
         set $present true;
     }
 
-    if( $arg_utm_source ~ "(^42$)" ) {
-        set $variant $variant3;
-        set $present true;
-    }
-
-    if( $arg_utm_source ~ "(^98$)" ) {
-        set $variant $variant4;
-        set $present true;
-    }
-
-    if( $arg_p ~ "(^98$)" ) {
-        set $variant $variant4;
+    if( $arg_utm_source ~ "(^64$|^google$)" ) {
+        set $variant $variant1;
         set $present true;
     }
 
