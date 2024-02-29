@@ -53,7 +53,7 @@ data:
 
        # conditional splitting
       
-      #<PARSE CONDS>
+      #<PARSE COND>
     if( $arg_p ~ "(^64$|^65$)" ) {
         set $variant $variant1;
         set $present true;
@@ -63,7 +63,9 @@ data:
         set $variant $variant2;
         set $present true;
     }
+    #</PARSE>
 
+    #<PARSE CONDP>
     if( $arg_utm_source ~ "(^42$)" ) {
         set $variant $variant3;
         set $present true;
